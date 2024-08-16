@@ -7,7 +7,11 @@ const blockSize = 10;
 const widthInBlocks = width / blockSize;
 const heightInBlocks = height / blockSize;
 
+const colors = ["toughGreen", "lightBlue", "Green",];
+
 let score = 0;
+let speed = 100;
+let intervalId;
 
 const drawBorder = function () {
     ctx.fillStyle = "Grey";
@@ -80,7 +84,8 @@ const Snake = function () {
 
 Snake.prototype.draw = function () {
     for (let i = 0; i < this.segments.length; i += 1) {
-        this.segments[i].drawSquare("Blue");
+        const colorIndex = i % colors.length;
+        this.segments[i].drawSquare(colors[colorIndex]);
     }
 };
 
@@ -110,6 +115,9 @@ Snake.prototype.move = function () {
     if (newHead.equal(apple.position)) {
         score += 1;
         apple.move();
+        speed = Math.max(speed - 100, 100); // Decrease speed with a minimum limit
+        clearInterval(intervalId);
+        intervalId = setInterval(gameLoop, speed);
     } else {
         this.segments.pop();
     }
@@ -162,15 +170,16 @@ Apple.prototype.move = function () {
 const snake = new Snake();
 const apple = new Apple();
 
-const intervalId = setInterval(function () {
+const gameLoop = function () {
     ctx.clearRect(0, 0, width, height);
     drawScore();
     snake.move();
     snake.draw();
     apple.draw();
     drawBorder();
+};
 
-}, 100);
+intervalId = setInterval(gameLoop, speed);
 
 const directions = {
     37: "left",
