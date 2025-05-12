@@ -1,22 +1,25 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = Math.floor(window.innerWidth / 20) * 10;
-canvas.height = Math.floor(window.innerHeight / 20) * 10;
+const restartBtn = document.getElementById("restartBtn");
 
-const width = canvas.width;
-const height = canvas.height;
+const scale = window.devicePixelRatio || 1;
+const isMobile = window.innerWidth < 768;
+const blockSize = isMobile ? 20 : 10;
 
-const blockSize = 10;
+canvas.width = Math.floor(window.innerWidth / blockSize) * blockSize * scale;
+canvas.height = Math.floor(window.innerHeight / blockSize) * blockSize * scale;
+canvas.style.width = `${canvas.width / scale}px`;
+canvas.style.height = `${canvas.height / scale}px`;
+ctx.scale(scale, scale);
+
+const width = canvas.width / scale;
+const height = canvas.height / scale;
 const widthInBlocks = width / blockSize;
 const heightInBlocks = height / blockSize;
 
 const colors = ["green", "lightblue", "limegreen"];
-
-let score = 0;
-let speed = 100;
-let intervalId;
-let highScore = parseInt(localStorage.getItem("snakeHighScore")) || 0;
+let score, speed, intervalId, highScore, snake, apple;
 
 const drawBorder = () => {
     ctx.fillStyle = "Grey";
@@ -46,6 +49,8 @@ const gameOver = () => {
         highScore = score;
         localStorage.setItem("snakeHighScore", highScore);
     }
+
+    restartBtn.style.display = "block";
 };
 
 const circle = (x, y, radius, fillCircle, color) => {
@@ -162,9 +167,6 @@ Apple.prototype.move = function () {
     this.position = new Block(randomCol, randomRow);
 };
 
-const snake = new Snake();
-const apple = new Apple();
-
 const gameLoop = () => {
     ctx.clearRect(0, 0, width, height);
     drawScore();
@@ -174,7 +176,20 @@ const gameLoop = () => {
     drawBorder();
 };
 
-intervalId = setInterval(gameLoop, speed);
+const startGame = () => {
+    score = 0;
+    speed = 100;
+    highScore = parseInt(localStorage.getItem("snakeHighScore")) || 0;
+
+    snake = new Snake();
+    apple = new Apple();
+    restartBtn.style.display = "none";
+
+    clearInterval(intervalId);
+    intervalId = setInterval(gameLoop, speed);
+};
+
+restartBtn.addEventListener("click", startGame);
 
 const directions = {
     37: "left",
@@ -197,7 +212,7 @@ canvas.addEventListener("touchstart", e => {
     const touch = e.touches[0];
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
-});
+}, { passive: false });
 
 canvas.addEventListener("touchend", e => {
     const touch = e.changedTouches[0];
@@ -211,4 +226,6 @@ canvas.addEventListener("touchend", e => {
         if (dy > 0) snake.setDirection("down");
         else snake.setDirection("up");
     }
-});
+}, { passive: false });
+
+startGame();
